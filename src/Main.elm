@@ -5,6 +5,7 @@ import Html.Attributes as Attrs exposing (..)
 import Html.Events as Events exposing (..)
 import Menu
 
+import Html.Events as Events
 
 
 -- MODEL

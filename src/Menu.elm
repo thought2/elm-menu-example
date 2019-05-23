@@ -1,7 +1,6 @@
-module Menu exposing (Config, Link, Model, Msg(..), init, update, view)
+module Menu exposing (Config, Model, Msg(..), init, update, views)
 
 import Html exposing (..)
-import Html.Events as Events
 import SelectList exposing (SelectList)
 
 
@@ -10,14 +9,12 @@ import SelectList exposing (SelectList)
 
 
 type alias Model a =
-    { links : SelectList a
-    }
+    SelectList a
 
 
 init : List a -> a -> List a -> Model a
 init before selected after =
-    { links = SelectList.fromLists before selected after
-    }
+    SelectList.fromLists before selected after
 
 
 
@@ -32,39 +29,28 @@ update : Msg a -> Model a -> Model a
 update msg model =
     case msg of
         Select selection ->
-            { links = SelectList.select ((==) selection) model.links }
+            SelectList.select ((==) selection) model
 
 
 
 -- VIEW
 
 
-type alias Link =
-    { title : String }
-
-
-type alias Config msg a =
-    { toLink : a -> Link
-    , msgConstructor : Msg a -> msg
+type alias Config a msg =
+    { onSelf : Msg a -> msg
+    , viewItem : { isSelected : Bool, item : a } -> Html (Msg a)
     }
 
 
-view : Config msg a -> Model a -> Html msg
-view config model =
-    ul []
-        (model.links
-            |> SelectList.mapBy
-                (\pos item ->
-                    li [ Events.onClick (config.msgConstructor <| Select item) ]
-                        [ text <|
-                            (if pos == SelectList.Selected then
-                                "-> "
-
-                             else
-                                ""
-                            )
-                                ++ (config.toLink item).title
-                        ]
-                )
-            |> SelectList.toList
-        )
+views : Config a msg -> Model a -> List (Html msg)
+views config model =
+    model
+        |> SelectList.mapBy
+            (\pos item ->
+                Html.map config.onSelf <|
+                    config.viewItem
+                        { isSelected = pos == SelectList.Selected
+                        , item = item
+                        }
+            )
+        |> SelectList.toList
